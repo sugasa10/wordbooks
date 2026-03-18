@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FEフラッシュ</title>
+<style>
+body{font-family:sans-serif;background:#111;color:white;margin:0;}
+#menu{padding:20px;}
+.book{background:#333;margin:10px 0;padding:20px;border-radius:10px;cursor:pointer;}
+.word{background:#222;margin:10px;padding:20px;border-radius:10px;font-size:24px;}
+#back{background:#555;margin:10px 0;padding:10px;border-radius:10px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div id="menu"></div>
+<div id="words"></div>
+
+<script>
+// --- 単語帳選択フェーズ ---
+function loadBooks(){
+    fetch("/wordbooks")
+    .then(r=>r.json())
+    .then(data=>{
+        let menu = document.getElementById("menu")
+        menu.innerHTML="<h2>単語帳を選択</h2>"
+        data.forEach(b=>{
+            let div=document.createElement("div")
+            div.className="book"
+            div.textContent=b
+            div.onclick=()=>startBook(b)
+            menu.appendChild(div)
+        })
+    })
+}
+
+// --- 単語表示開始 ---
+function startBook(book){
+    fetch("/load",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({book:book})
+    }).then(()=>{
+        document.getElementById("menu").style.display="none"
+        document.getElementById("words").innerHTML=""
+        loadMore()
+    })
+}
+
+// --- 無限スクロール ---
+function loadMore(){
+    fetch("/next")
+    .then(r=>r.json())
+    .then(data=>{
+        let area=document.getElementById("words")
+        data.forEach(w=>{
+            let div=document.createElement("div")
+            div.className="word"
+            div.textContent=w
+            div.onclick=()=>{
+                let s=new Audio("/static/kettei.mp3")
+                s.play()
+                div.remove()
+                fetch("/remove",{
+                    method:"POST",
+                    headers:{"Content-Type":"application/json"},
+                    body:JSON.stringify({word:w})
+                })
+            }
+            area.appendChild(div)
+        })
+    })
+}
+
+// --- 無限スクロールイベント ---
+window.addEventListener("scroll", ()=>{
+    if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 10){
+        loadMore()
+    }
+})
+
+// --- 単語帳選択に戻る ---
+function backToMenu(){
+    document.getElementById("menu").style.display="block"
+    document.getElementById("words").innerHTML=""
+}
+
+window.onload=loadBooks
+</script>
+
+</body>
+</html>

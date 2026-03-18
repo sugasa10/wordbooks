@@ -1,0 +1,11 @@
+words.txt
+utf-8
+/
+flash.html
+/next
+/remove
+POST
+word
+status
+ok
+0.0.0.0
